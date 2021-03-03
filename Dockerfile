@@ -11,46 +11,29 @@ ARG BASE_IMAGE="${BASE_IMAGE_NAME}:${BASE_IMAGE_VERSION}"
 
 FROM ${BASE_IMAGE}
 
+RUN mkdir -p /usr/share/man/man1 /usr/share/man/man2
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN \
+  apt-get update && \
+  apt-get -y install --no-install-recommends \
+    openjdk-11-jdk \
+    octave && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/*
+
 RUN \
   apt-get update && \
   apt-get -y install \
     build-essential \
     cmake \
-    f2c \
-    gperf \
-    bison \
-    imagemagick \
-    flex \
-    libreadline6-dev \
-    gfortran \
     wget \
-    libtool \
     git \
     vim && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
 WORKDIR "/tmp/build"
-
-RUN \
-git clone https://github.com/gnu-octave/octave && \
-cd octave && \
-./bootstrap
-
-RUN \
-  apt-get update && \
-  apt-get -y install \
-    libblas-dev \
-    liblapack-dev \
-    libpcre3-dev && \
-  apt-get clean && \
-  rm -rf /var/lib/apt/lists/*
-
-RUN \
-cd octave && \
-./configure && \
-make && \
-make install
 
 # Build OpenCV
 ENV OPENCV_VERSION="2.4.13.6"
@@ -66,8 +49,7 @@ RUN \
       -DBUILD_EXAMPLES=OFF \
       -DCMAKE_INSTALL_PREFIX=/usr \
       ../opencv-${OPENCV_VERSION} && \
-  make -j${NPROC} && \
+  make -j$(nproc) && \
   make install && \
   cd .. && \
   rm -rf build && rm -rf opencv*
-
